@@ -20,6 +20,7 @@ class ShoeImage(SQLModel, table=True):
     __tablename__ = "shoe_image"  # type: ignore
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    angle: str
     file: str
     heatmap: Optional[dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
 

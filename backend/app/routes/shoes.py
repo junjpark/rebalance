@@ -1,9 +1,6 @@
-from __future__ import annotations
-
-import shutil
 import uuid
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Optional, cast
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -12,6 +9,13 @@ from sqlmodel import Session, select
 
 from app.database import get_session
 from app.models import Shoe, ShoeImage
+from app.scanner import (
+    ANGLE_TO_LOCATION,
+    Angle,
+    LocationResult,
+    ScanResult,
+    analyze_shoe,
+)
 
 router = APIRouter(prefix="/shoes", tags=["shoes"])
 
@@ -30,8 +34,9 @@ class AddShoeResponse(BaseModel):
 
 class ShoeImageOut(BaseModel):
     id: uuid.UUID
+    angle: Angle
     file: str
-    heatmap: dict[str, Any] | None
+    heatmap: Optional[LocationResult]
 
 
 class ShoeOut(BaseModel):
@@ -50,28 +55,24 @@ class AllShoeIdsResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def _save_upload(upload: UploadFile, dest_dir: Path) -> str:
-    """Stub: persist an uploaded file to *dest_dir* and return its relative path."""
-    suffix = Path(upload.filename).suffix if upload.filename else ".bin"
-    filename = f"{uuid.uuid4()}{suffix}"
+def _save_bytes(data: bytes, filename: str, dest_dir: Path) -> str:
+    """Persist *data* to *dest_dir*/*filename* and return the relative path string."""
     dest = dest_dir / filename
-    with dest.open("wb") as f:
-        shutil.copyfileobj(upload.file, f)
+    dest.write_bytes(data)
     return str(dest)
 
 
-# TODO: replace this with Justin's function
-def _stub_heatmap() -> dict[str, Any]:
-    """Return a placeholder heatmap payload until real analysis is wired in."""
-    return {
-        "zones": {
-            "heel": 0.0,
-            "arch": 0.0,
-            "ball": 0.0,
-            "toe": 0.0,
-        },
-        "analyzed": False,
+def _ext_from_mime(mime: str) -> str:
+    """Return a file extension for *mime*, defaulting to ``.jpg``."""
+    mapping: dict[str, str] = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+        "image/gif": ".gif",
+        "image/bmp": ".bmp",
+        "image/tiff": ".tiff",
     }
+    return mapping.get(mime, ".jpg")
 
 
 # ---------------------------------------------------------------------------
@@ -80,25 +81,67 @@ def _stub_heatmap() -> dict[str, Any]:
 
 
 @router.post("/", response_model=AddShoeResponse, status_code=201)
-def add_shoe(
+async def add_shoe(
     name: Annotated[str, Form()],
     user: Annotated[str, Form()],
-    images: Annotated[list[UploadFile], File()],
+    front: Annotated[UploadFile, File()],
+    lateral: Annotated[UploadFile, File()],
+    back: Annotated[UploadFile, File()],
+    medial: Annotated[UploadFile, File()],
+    top: Annotated[UploadFile, File()],
+    sole: Annotated[UploadFile, File()],
     session: Session = Depends(get_session),
 ) -> AddShoeResponse:
-    """Create a new shoe record, persist the uploaded images, and return the shoe id."""
+    """Accept 6 shoe images, run Gemini damage analysis, persist everything, and return the shoe id."""
+    named_uploads: list[tuple[Angle, UploadFile]] = [
+        ("front", front),
+        ("lateral", lateral),
+        ("back", back),
+        ("medial", medial),
+        ("top", top),
+        ("sole", sole),
+    ]
+
+    # Read all file bytes upfront — the streams are consumed once, then used
+    # for both disk persistence and the Gemini API call.
+    image_data: list[tuple[Angle, bytes, str]] = []
+    for angle, upload in named_uploads:
+        data = await upload.read()
+        mime = upload.content_type or "image/jpeg"
+        image_data.append((angle, data, mime))
+
+    # Run Gemini analysis. If the API is unavailable we still save the shoe,
+    # just without heatmaps.
+    location_map: dict[str, LocationResult] = {}
+    try:
+        scan: ScanResult = await analyze_shoe(
+            [(data, mime) for _, data, mime in image_data]
+        )
+        location_map = {r.location: r for r in scan.locations}
+    except Exception as exc:
+        print(
+            f"[scanner] Gemini analysis failed, storing images without heatmaps: {exc}"
+        )
+
+    # Persist the shoe row and flush to get its id for the upload sub-directory.
     shoe = Shoe(name=name, user=user)
     session.add(shoe)
-    session.flush()  # populate shoe.id before using it for the sub-directory
+    session.flush()
 
     shoe_dir = UPLOADS_DIR / str(shoe.id)
     shoe_dir.mkdir(parents=True, exist_ok=True)
 
-    for upload in images:
-        file_path = _save_upload(upload, shoe_dir)
+    for angle, data, mime in image_data:
+        filename = f"{uuid.uuid4()}{_ext_from_mime(mime)}"
+        file_path = _save_bytes(data, filename, shoe_dir)
+
+        location_name = ANGLE_TO_LOCATION[angle]
+        result = location_map.get(location_name)
+
         shoe_image = ShoeImage(
+            angle=angle,
             file=file_path,
-            heatmap=_stub_heatmap(),
+            heatmap=result.model_dump() if result is not None else None,
             shoe_id=shoe.id,
         )
         session.add(shoe_image)
@@ -122,13 +165,20 @@ def get_shoe(
     shoe_id: uuid.UUID,
     session: Session = Depends(get_session),
 ) -> ShoeOut:
-    """Return a shoe's metadata, image paths, and heatmap data."""
+    """Return a shoe's metadata, image paths, and per-image Gemini damage heatmaps."""
     shoe = session.get(Shoe, shoe_id)
     if shoe is None:
         raise HTTPException(status_code=404, detail="Shoe not found")
 
     images_out = [
-        ShoeImageOut(id=img.id, file=img.file, heatmap=img.heatmap)
+        ShoeImageOut(
+            id=img.id,
+            angle=cast(Angle, img.angle),
+            file=img.file,
+            heatmap=LocationResult.model_validate(img.heatmap)
+            if img.heatmap is not None
+            else None,
+        )
         for img in shoe.images
     ]
     return ShoeOut(id=shoe.id, name=shoe.name, user=shoe.user, images=images_out)
