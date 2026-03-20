@@ -108,7 +108,7 @@ async def analyze_shoe(
             contents=parts,
             config=genai.types.GenerateContentConfig(
                 response_mime_type="application/json",
-                max_output_tokens=4096,
+                max_output_tokens=8192,
             ),
         )
 
@@ -118,13 +118,16 @@ async def analyze_shoe(
         print(f"[scan] Finish reason: {finish}")
 
         if not raw:
-            return {"locations": [], "summary": {}}
+            return JSONResponse(status_code=502, content={"error": "Empty response from AI"})
+
+        if str(finish) == "FinishReason.MAX_TOKENS":
+            return JSONResponse(status_code=502, content={"error": "AI response was truncated. Please try again."})
 
         try:
             result = json.loads(raw)
         except json.JSONDecodeError:
             print(f"[scan] JSON parse failed on: {raw!r}")
-            result = {"locations": [], "summary": {}}
+            return JSONResponse(status_code=502, content={"error": "AI returned invalid JSON. Please try again."})
 
         for loc in result.get("locations", []):
             bbox = loc.get("bbox")
