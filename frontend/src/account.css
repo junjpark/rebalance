@@ -1,0 +1,256 @@
+/* ——— Site header ——— */
+.site-header {
+  border-bottom: 1px solid #e5e5e5;
+  background: #fff;
+}
+
+.site-header__inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.site-header__logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.site-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 1.35rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.site-header__nav a {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: #1a1a1a;
+}
+
+.site-header__nav a:hover {
+  opacity: 0.65;
+}
+
+.site-header__tools {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-shrink: 0;
+}
+
+.site-header__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  cursor: default;
+  color: #1a1a1a;
+}
+
+.site-header__icon-btn svg {
+  display: block;
+}
+
+.site-header__tool-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.site-header__nb {
+  display: block;
+  color: #cf0a2c;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+/* ——— Account shell ——— */
+.account-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 3rem;
+}
+
+.account-breadcrumb {
+  font-size: 0.8125rem;
+  color: #1a1a1a;
+  margin-bottom: 1.75rem;
+}
+
+.account-breadcrumb__current {
+  font-weight: 600;
+}
+
+.account-breadcrumb__sep {
+  margin: 0 0.35rem;
+  font-weight: 400;
+  color: #666;
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .account-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ——— Sidebar ——— */
+.account-sidebar {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.account-sidebar__item {
+  margin-bottom: 0.15rem;
+}
+
+.account-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.account-sidebar__link:hover {
+  background: #fafafa;
+}
+
+.account-sidebar__link--active {
+  border-color: #1a1a1a;
+}
+
+.account-sidebar__link--route:hover {
+  background: #fafafa;
+}
+
+.account-sidebar__icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.account-sidebar__logout-wrap {
+  margin-top: 2rem;
+  padding-top: 0.5rem;
+}
+
+.account-sidebar__logout-rule {
+  height: 2px;
+  width: 1.75rem;
+  background: #cf0a2c;
+  margin-bottom: 0.65rem;
+  margin-left: 0.75rem;
+}
+
+.account-sidebar__logout {
+  cursor: default;
+}
+
+/* ——— Orders main ——— */
+.orders-main__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.25rem;
+  color: #1a1a1a;
+}
+
+.orders-tabs {
+  display: flex;
+  border: 1px solid #d4d4d4;
+  border-radius: 2px;
+  overflow: hidden;
+  max-width: 320px;
+  margin-bottom: 1.25rem;
+}
+
+.orders-tabs__btn {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: none;
+  border-right: 1px solid #d4d4d4;
+  background: #f0f0f0;
+  color: #1a1a1a;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.orders-tabs__btn:last-child {
+  border-right: none;
+}
+
+.orders-tabs__btn--active {
+  background: #fff;
+}
+
+.orders-tabs__btn:not(.orders-tabs__btn--active):hover {
+  background: #e8e8e8;
+}
+
+.orders-empty {
+  border: 1px solid #d4d4d4;
+  border-radius: 2px;
+  padding: 2.5rem 1.5rem;
+  background: #fff;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orders-empty p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #333;
+}
+
+/* ——— Rebalance blank page ——— */
+.rebalance-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.rebalance-page h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
