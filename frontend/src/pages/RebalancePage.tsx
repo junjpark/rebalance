@@ -5,24 +5,37 @@ import './rebalance.css'
 
 const API_URL = 'http://localhost:3000/api/analyze-shoe'
 
-interface DamageRegion {
-  label: string
-  area: string
-  severity: 'minor' | 'moderate' | 'severe'
+interface LocationResult {
+  location: string
+  damaged: boolean
+  confidence: number
+  damage_type: 'scratch' | 'hole' | 'tear' | null
   description: string
-  bbox: [number, number, number, number]
+  bbox: [number, number, number, number] | null
 }
 
-const SEVERITY_COLOR: Record<string, string> = {
-  minor: '#f59e0b',
-  moderate: '#f97316',
-  severe: '#ef4444',
+interface AnalysisResponse {
+  locations: LocationResult[]
+  summary: Record<string, number>
+}
+
+function confidenceColor(c: number) {
+  if (c >= 80) return '#ef4444'
+  if (c >= 50) return '#f97316'
+  return '#f59e0b'
+}
+
+function damageTypeColor(t: string | null) {
+  if (t === 'hole') return '#dc2626'
+  if (t === 'tear') return '#ea580c'
+  if (t === 'scratch') return '#d97706'
+  return '#a3a3a3'
 }
 
 export function RebalancePage() {
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
-  const [damages, setDamages] = useState<DamageRegion[]>([])
+  const [results, setResults] = useState<AnalysisResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
@@ -30,7 +43,7 @@ export function RebalancePage() {
 
   const handleFile = useCallback((f: File) => {
     setFile(f)
-    setDamages([])
+    setResults(null)
     setError(null)
     const reader = new FileReader()
     reader.onload = () => setPreview(reader.result as string)
@@ -58,14 +71,14 @@ export function RebalancePage() {
     if (!file) return
     setLoading(true)
     setError(null)
-    setDamages([])
+    setResults(null)
     try {
       const form = new FormData()
       form.append('file', file)
       const res = await fetch(API_URL, { method: 'POST', body: form })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || `Server error ${res.status}`)
-      setDamages(data.damages ?? [])
+      setResults(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed')
     } finally {
@@ -76,10 +89,14 @@ export function RebalancePage() {
   const reset = useCallback(() => {
     setPreview(null)
     setFile(null)
-    setDamages([])
+    setResults(null)
     setError(null)
     if (fileRef.current) fileRef.current.value = ''
   }, [])
+
+  const locations = results?.locations ?? []
+  const damagedCount = locations.filter((l) => l.damaged).length
+  const summary = results?.summary
 
   return (
     <div className="rb">
@@ -122,46 +139,46 @@ export function RebalancePage() {
           </div>
         ) : (
           <div className="rb-results">
-            <div className="rb-image-wrap">
-              <img src={preview} alt="Uploaded shoe" className="rb-image" />
-              {damages.map((d, i) => {
-                const [x, y, w, h] = d.bbox
-                const isHovered = hoveredIdx === i
-                return (
-                  <div
-                    key={i}
-                    className={`rb-bbox ${isHovered ? 'rb-bbox--hover' : ''}`}
-                    style={{
-                      left: `${x}%`,
-                      top: `${y}%`,
-                      width: `${w}%`,
-                      height: `${h}%`,
-                      borderColor: SEVERITY_COLOR[d.severity] ?? '#ef4444',
-                    }}
-                    onMouseEnter={() => setHoveredIdx(i)}
-                    onMouseLeave={() => setHoveredIdx(null)}
-                  >
-                    <span
-                      className="rb-bbox__label"
-                      style={{ background: SEVERITY_COLOR[d.severity] ?? '#ef4444' }}
+            <div className="rb-image-col">
+              <div className="rb-image-wrap">
+                <img src={preview} alt="Uploaded shoe" className="rb-image" />
+                {locations.map((loc, i) =>
+                  loc.bbox && loc.damaged ? (
+                    <div
+                      key={i}
+                      className={`rb-bbox ${hoveredIdx === i ? 'rb-bbox--hover' : ''}`}
+                      style={{
+                        left: `${loc.bbox[0]}%`,
+                        top: `${loc.bbox[1]}%`,
+                        width: `${loc.bbox[2]}%`,
+                        height: `${loc.bbox[3]}%`,
+                        borderColor: confidenceColor(loc.confidence),
+                      }}
+                      onMouseEnter={() => setHoveredIdx(i)}
+                      onMouseLeave={() => setHoveredIdx(null)}
                     >
-                      {d.label}
-                    </span>
+                      <span
+                        className="rb-bbox__label"
+                        style={{ background: confidenceColor(loc.confidence) }}
+                      >
+                        {loc.location} — {loc.confidence}%
+                      </span>
+                    </div>
+                  ) : null,
+                )}
+                {loading && (
+                  <div className="rb-image-overlay">
+                    <div className="rb-spinner" />
+                    <p>Scanning 6 locations…</p>
                   </div>
-                )
-              })}
-              {loading && (
-                <div className="rb-image-overlay">
-                  <div className="rb-spinner" />
-                  <p>Analyzing damage…</p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             <div className="rb-panel">
               <div className="rb-panel__actions">
                 <button type="button" className="rb-btn rb-btn--primary" onClick={analyze} disabled={loading}>
-                  {loading ? 'Analyzing…' : damages.length ? 'Re-analyze' : 'Analyze damage'}
+                  {loading ? 'Analyzing…' : results ? 'Re-analyze' : 'Analyze damage'}
                 </button>
                 <button type="button" className="rb-btn rb-btn--ghost" onClick={reset} disabled={loading}>
                   Upload new
@@ -170,36 +187,76 @@ export function RebalancePage() {
 
               {error && <p className="rb-error">{error}</p>}
 
-              {damages.length > 0 && (
-                <div className="rb-damage-list">
-                  <h2 className="rb-damage-list__title">
-                    {damages.length} damage region{damages.length !== 1 ? 's' : ''} detected
-                  </h2>
-                  {damages.map((d, i) => (
-                    <div
-                      key={i}
-                      className={`rb-damage-card ${hoveredIdx === i ? 'rb-damage-card--hover' : ''}`}
-                      onMouseEnter={() => setHoveredIdx(i)}
-                      onMouseLeave={() => setHoveredIdx(null)}
-                    >
-                      <div className="rb-damage-card__header">
-                        <span
-                          className="rb-damage-card__severity"
-                          style={{ background: SEVERITY_COLOR[d.severity] }}
-                        >
-                          {d.severity}
-                        </span>
-                        <span className="rb-damage-card__area">{d.area}</span>
+              {results && (
+                <>
+                  <div className="rb-summary-banner">
+                    <span className="rb-summary-banner__count">{damagedCount}</span>
+                    <span className="rb-summary-banner__text">
+                      of 6 locations show damage
+                    </span>
+                  </div>
+
+                  <div className="rb-location-list">
+                    {locations.map((loc, i) => (
+                      <div
+                        key={i}
+                        className={`rb-loc-card ${hoveredIdx === i ? 'rb-loc-card--hover' : ''} ${loc.damaged ? 'rb-loc-card--damaged' : ''}`}
+                        onMouseEnter={() => setHoveredIdx(i)}
+                        onMouseLeave={() => setHoveredIdx(null)}
+                      >
+                        <div className="rb-loc-card__top">
+                          <span className={`rb-loc-card__status ${loc.damaged ? 'rb-loc-card__status--bad' : 'rb-loc-card__status--ok'}`}>
+                            {loc.damaged ? '●' : '○'}
+                          </span>
+                          <span className="rb-loc-card__name">{loc.location}</span>
+                          {loc.damage_type && (
+                            <span
+                              className="rb-loc-card__type"
+                              style={{ background: damageTypeColor(loc.damage_type) }}
+                            >
+                              {loc.damage_type}
+                            </span>
+                          )}
+                        </div>
+                        {loc.damaged && (
+                          <div className="rb-loc-card__confidence">
+                            <div className="rb-loc-card__bar">
+                              <div
+                                className="rb-loc-card__bar-fill"
+                                style={{
+                                  width: `${loc.confidence}%`,
+                                  background: confidenceColor(loc.confidence),
+                                }}
+                              />
+                            </div>
+                            <span className="rb-loc-card__pct">{loc.confidence}%</span>
+                          </div>
+                        )}
+                        <p className="rb-loc-card__desc">{loc.description}</p>
                       </div>
-                      <h3 className="rb-damage-card__label">{d.label}</h3>
-                      <p className="rb-damage-card__desc">{d.description}</p>
+                    ))}
+                  </div>
+
+                  {summary && (
+                    <div className="rb-freq">
+                      <h3 className="rb-freq__title">Damage frequency</h3>
+                      <div className="rb-freq__grid">
+                        {Object.entries(summary).map(([loc, count]) => (
+                          <div key={loc} className="rb-freq__row">
+                            <span className="rb-freq__loc">{loc}</span>
+                            <span className={`rb-freq__count ${count > 0 ? 'rb-freq__count--pos' : ''}`}>
+                              {count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
 
-              {!loading && damages.length === 0 && !error && file && (
-                <p className="rb-hint">Press "Analyze damage" to scan the shoe for wear and damage.</p>
+              {!loading && !results && !error && file && (
+                <p className="rb-hint">Press "Analyze damage" to scan the shoe across 6 locations.</p>
               )}
             </div>
           </div>

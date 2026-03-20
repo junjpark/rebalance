@@ -282,66 +282,174 @@
   line-height: 1.55;
 }
 
-/* ——— Damage cards ——— */
-.rb-damage-list__title {
-  margin: 0 0 0.75rem;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
-.rb-damage-card {
-  padding: 0.85rem 1rem;
+/* ——— Summary banner ——— */
+.rb-summary-banner {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
   background: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 8px;
-  margin-bottom: 0.5rem;
+}
+
+.rb-summary-banner__count {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+.rb-summary-banner__text {
+  font-size: 0.8125rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* ——— Location cards ——— */
+.rb-location-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rb-loc-card {
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
   transition:
     border-color 150ms,
     box-shadow 150ms;
   cursor: default;
 }
 
-.rb-damage-card--hover {
+.rb-loc-card--hover {
   border-color: #bbb;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
 }
 
-.rb-damage-card__header {
+.rb-loc-card--damaged {
+  border-left: 3px solid #ef4444;
+}
+
+.rb-loc-card__top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.rb-loc-card__status {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.rb-loc-card__status--bad {
+  color: #ef4444;
+}
+
+.rb-loc-card__status--ok {
+  color: #22c55e;
+}
+
+.rb-loc-card__name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.rb-loc-card__type {
+  display: inline-block;
+  padding: 1px 7px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rb-loc-card__confidence {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.35rem;
 }
 
-.rb-damage-card__severity {
-  display: inline-block;
-  padding: 1px 8px;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: #fff;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.rb-loc-card__bar {
+  flex: 1;
+  height: 5px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-.rb-damage-card__area {
+.rb-loc-card__bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 400ms ease;
+}
+
+.rb-loc-card__pct {
   font-size: 0.75rem;
-  color: #888;
-  font-weight: 500;
-  text-transform: capitalize;
+  font-weight: 700;
+  color: #555;
+  min-width: 2.5rem;
+  text-align: right;
 }
 
-.rb-damage-card__label {
-  margin: 0 0 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.rb-damage-card__desc {
+.rb-loc-card__desc {
   margin: 0;
   font-size: 0.8125rem;
   color: #555;
   line-height: 1.5;
+}
+
+/* ——— Frequency table ——— */
+.rb-freq {
+  padding: 0.85rem 1rem;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.rb-freq__title {
+  margin: 0 0 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rb-freq__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rb-freq__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rb-freq__loc {
+  font-size: 0.8125rem;
+  color: #555;
+}
+
+.rb-freq__count {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #a3a3a3;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+.rb-freq__count--pos {
+  color: #ef4444;
 }
