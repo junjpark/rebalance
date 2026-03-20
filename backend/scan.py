@@ -64,7 +64,14 @@ For each of the 6 locations return:
 - "confidence": 0-100 (how sure you are that the damage meets the criteria above)
 - "damage_type": one of "structural", "surface_wear", "sole_degradation", "missing_parts", or null if not damaged
 - "description": SHORT description, max 12 words
-- "bbox": [x, y, width, height] as percentages (0-100) of THAT image's dimensions, or null
+- "bbox": bounding box around the SPECIFIC damaged area as [ymin, xmin, ymax, xmax] on a 0-1000 scale, or null if not damaged or not visible.
+  IMPORTANT bbox instructions:
+  - The coordinates are relative to the INDIVIDUAL image for that angle.
+  - 0,0 is the top-left corner. 1000,1000 is the bottom-right corner.
+  - Draw the box TIGHTLY around just the damaged area, not the entire shoe.
+  - ymin < ymax and xmin < xmax always.
+  - If damage covers a small scratch, the box should be small. If it covers a large tear, the box should be larger.
+  - Think step by step: first locate the damage visually, then estimate its top-left and bottom-right corners.
 
 Always return all 6 locations. Keep descriptions very short.
 
@@ -118,6 +125,17 @@ async def analyze_shoe(
         except json.JSONDecodeError:
             print(f"[scan] JSON parse failed on: {raw!r}")
             result = {"locations": [], "summary": {}}
+
+        for loc in result.get("locations", []):
+            bbox = loc.get("bbox")
+            if bbox and len(bbox) == 4:
+                ymin, xmin, ymax, xmax = bbox
+                loc["bbox"] = [
+                    xmin / 10.0,
+                    ymin / 10.0,
+                    (xmax - xmin) / 10.0,
+                    (ymax - ymin) / 10.0,
+                ]
 
         return result
 
