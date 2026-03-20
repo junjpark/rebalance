@@ -7,6 +7,7 @@ import {
   IconOrders,
   IconPerson,
   IconPin,
+  IconReturn,
   IconSliders,
 } from './icons'
 
@@ -51,6 +52,12 @@ export function AccountSidebar() {
             <IconFootScan className="account-sidebar__icon" />
             3D foot scan
           </a>
+        </li>
+        <li className="account-sidebar__item">
+          <Link to="/returns" className="account-sidebar__link account-sidebar__link--route">
+            <IconReturn className="account-sidebar__icon" />
+            Returns
+          </Link>
         </li>
         <li className="account-sidebar__item">
           <Link to="/rebalance" className="account-sidebar__link account-sidebar__link--route">

@@ -158,6 +158,110 @@ async def analyze_shoe(
         )
 
 
+RETURN_PROMPT_TEMPLATE = """You are a shoe return assessment system for a retail company. You will receive 6 photos of the SAME shoe taken from different angles. Your job is to decide whether the shoe can be resold.
+
+SHOE INFO:
+- Model: {shoe_name}
+- Official colorway: {colorway}
+
+CRITICAL: The colors listed in the official colorway above are INTENTIONAL DESIGN COLORS, not stains or dirt. For example, brown/tan/clay/earth tones, red accents, dark patches, or multi-toned panels are part of the shoe's factory design. Do NOT flag the shoe's own colorway as staining, discoloration, or dirt. Only flag stains or discoloration that clearly do NOT belong to the original design — e.g. mud splatter, food stains, yellowing from age, water marks with visible tide lines.
+
+The 6 images are provided in this order:
+1. Front view (toe pointing at camera)
+2. Lateral side view (right side)
+3. Back view (heel facing camera)
+4. Medial side view (left side)
+5. Top-down view (looking down)
+6. Sole view (shoe flipped, sole up)
+
+ASSESSMENT CRITERIA:
+
+1. Structural Damage: Any rips, tears, or holes anywhere on the shoe.
+2. Surface Wear: Heavy stains (NOT the shoe's natural colors), severe scuff marks, or heavy creasing in the materials.
+3. Sole Degradation: Significant wear and tear on either the bottom tread (outsole) or the interior insole.
+4. Missing Parts: Any missing original components, such as laces or insoles.
+
+VERDICTS — choose exactly one:
+
+- "full_refund": The shoe is in EXCELLENT condition — no damage from any criteria above. Looks unworn or barely worn. Could be put back on the shelf and resold as new.
+- "trade_in": The shoe shows SOME wear or minor damage but is still wearable and could be resold at a discount. Not perfect but not destroyed.
+- "not_eligible": The shoe has SIGNIFICANT damage from one or more criteria above. Cannot be resold in any capacity.
+
+Return JSON:
+{{
+  "verdict": "full_refund" | "trade_in" | "not_eligible",
+  "confidence": 0-100 (how confident you are in this verdict),
+  "condition": "Excellent" | "Good" | "Fair" | "Poor" (one-word summary),
+  "reasoning": 2-3 sentences explaining your decision. Do NOT mention the colorway as an issue.,
+  "issues": ["list of specific issues found, if any — empty array if none. Do NOT list the shoe's design colors as issues."]
+}}
+
+Be fair but thorough. Examine every angle carefully."""
+
+
+@app.post("/api/assess-return")
+async def assess_return(
+    front: UploadFile = File(...),
+    lateral: UploadFile = File(...),
+    back: UploadFile = File(...),
+    medial: UploadFile = File(...),
+    top: UploadFile = File(...),
+    sole: UploadFile = File(...),
+    shoe_name: str = "Unknown",
+    colorway: str = "Unknown",
+):
+    try:
+        prompt = RETURN_PROMPT_TEMPLATE.format(shoe_name=shoe_name, colorway=colorway)
+        print(f"[return] Shoe: {shoe_name}, Colorway: {colorway}")
+        parts: list = [prompt]
+
+        angle_labels = ["front", "lateral", "back", "medial", "top", "sole"]
+        for upload, label in zip(
+            [front, lateral, back, medial, top, sole], angle_labels
+        ):
+            data = await upload.read()
+            mime = upload.content_type or "image/jpeg"
+            parts.append(f"\n--- Image: {label} view ---")
+            parts.append(genai.types.Part.from_bytes(data=data, mime_type=mime))
+
+        print("[return] Sending 6 images to Gemini for return assessment...")
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=parts,
+            config=genai.types.GenerateContentConfig(
+                response_mime_type="application/json",
+                max_output_tokens=2048,
+            ),
+        )
+
+        raw = response.text
+        print(f"[return] Gemini response: {raw!r}")
+
+        if not raw:
+            return JSONResponse(status_code=502, content={"error": "Empty response from AI"})
+
+        try:
+            result = json.loads(raw)
+        except json.JSONDecodeError:
+            print(f"[return] JSON parse failed on: {raw!r}")
+            return JSONResponse(status_code=502, content={"error": "AI returned invalid response"})
+
+        return result
+
+    except genai_errors.ClientError as e:
+        print(traceback.format_exc())
+        if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            return JSONResponse(
+                status_code=429,
+                content={"error": "Rate limit exceeded. Wait a moment and try again."},
+            )
+        return JSONResponse(status_code=502, content={"error": f"Gemini API error: {e}"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
 if __name__ == "__main__":
     import uvicorn
 

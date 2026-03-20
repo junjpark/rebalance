@@ -75,6 +75,15 @@ export function IconBarcode({ className }: IconProps) {
   )
 }
 
+export function IconReturn({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M9 14l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 10h11a4 4 0 0 1 0 8h-4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function IconSearch({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
