@@ -60,6 +60,7 @@ def _save_upload(upload: UploadFile, dest_dir: Path) -> str:
     return str(dest)
 
 
+# TODO: replace this with Justin's function
 def _stub_heatmap() -> dict[str, Any]:
     """Return a placeholder heatmap payload until real analysis is wired in."""
     return {
