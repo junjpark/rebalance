@@ -29,14 +29,14 @@
 
 .brand {
   display: flex;
-  gap: 1px;
-  font-size: 1.95rem;
-  font-weight: 800;
-  font-style: italic;
-  letter-spacing: -0.08em;
-  color: #cf0a2c;
-  line-height: 1;
+  align-items: center;
   min-width: 54px;
+}
+
+.brand-logo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
 }
 
 .brand span:last-child {

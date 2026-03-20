@@ -1,5 +1,6 @@
 import './App.css'
 import nbHeroBg from './assets/nb-hero-bg.png'
+import nbLogo from './assets/nb-logo.png'
 import { Link, Route, Routes } from 'react-router-dom'
 
 function SiteHeader() {
@@ -11,8 +12,7 @@ function SiteHeader() {
 
       <nav className="main-nav">
         <div className="brand" aria-label="New Balance">
-          <span>N</span>
-          <span>B</span>
+          <img src={nbLogo} alt="New Balance" className="brand-logo" />
         </div>
         <ul className="nav-links">
           <li>New</li>
@@ -52,7 +52,7 @@ function HomePage() {
       <div className="hero-content">
         <h1>Step into your new balance.</h1>
         <div className="hero-actions">
-          <button type="button">Try New</button>
+          <button type="button">Try rebailance</button>
           <Link to="/learn-more" className="hero-link-button secondary">
             Learn More
           </Link>
