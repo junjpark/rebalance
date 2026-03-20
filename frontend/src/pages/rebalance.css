@@ -1,0 +1,347 @@
+/* ——— Shell ——— */
+.rb {
+  min-height: 100vh;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ——— Header ——— */
+.rb-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.5rem;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.rb-header__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: #1a1a1a;
+  text-decoration: none;
+  transition: background 150ms;
+}
+
+.rb-header__back:hover {
+  background: #f0f0f0;
+}
+
+.rb-header__back svg {
+  width: 20px;
+  height: 20px;
+}
+
+.rb-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rb-header__icon {
+  width: 22px;
+  height: 22px;
+}
+
+.rb-header__title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ——— Main ——— */
+.rb-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+/* ——— Upload zone ——— */
+.rb-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 460px;
+  min-height: 320px;
+  padding: 3rem 2rem;
+  border: 2px dashed #d0d0d0;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 200ms,
+    background 200ms;
+}
+
+.rb-upload:hover {
+  border-color: #999;
+  background: #f8f8f8;
+}
+
+.rb-upload__input {
+  display: none;
+}
+
+.rb-upload__icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rb-upload__icon {
+  width: 32px;
+  height: 32px;
+  color: #888;
+}
+
+.rb-upload__label {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.rb-upload__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #888;
+}
+
+/* ——— Results layout ——— */
+.rb-results {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1100px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .rb-results {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ——— Image + bounding boxes ——— */
+.rb-image-wrap {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #e8e8e8;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.rb-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.rb-bbox {
+  position: absolute;
+  border: 2px solid;
+  border-radius: 3px;
+  pointer-events: auto;
+  transition:
+    border-width 120ms,
+    box-shadow 120ms;
+}
+
+.rb-bbox--hover {
+  border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+
+.rb-bbox__label {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  transform: translateY(-100%);
+  padding: 1px 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  border-radius: 3px 3px 0 0;
+  line-height: 1.5;
+}
+
+/* ——— Loading overlay ——— */
+.rb-image-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(2px);
+}
+
+.rb-image-overlay p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.rb-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: rb-spin 0.7s linear infinite;
+}
+
+@keyframes rb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ——— Side panel ——— */
+.rb-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.rb-panel__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rb-btn {
+  padding: 0.65rem 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    background 150ms,
+    opacity 150ms;
+}
+
+.rb-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rb-btn--primary {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.rb-btn--primary:hover:not(:disabled) {
+  background: #333;
+}
+
+.rb-btn--ghost {
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid #d0d0d0;
+}
+
+.rb-btn--ghost:hover:not(:disabled) {
+  background: #f4f4f4;
+}
+
+.rb-error {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8125rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+.rb-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #888;
+  line-height: 1.55;
+}
+
+/* ——— Damage cards ——— */
+.rb-damage-list__title {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.rb-damage-card {
+  padding: 0.85rem 1rem;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
+  cursor: default;
+}
+
+.rb-damage-card--hover {
+  border-color: #bbb;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+.rb-damage-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.rb-damage-card__severity {
+  display: inline-block;
+  padding: 1px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rb-damage-card__area {
+  font-size: 0.75rem;
+  color: #888;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.rb-damage-card__label {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.rb-damage-card__desc {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #555;
+  line-height: 1.5;
+}
